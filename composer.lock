@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "f65b123f9eb9229eb737d529628deac7",
+    "content-hash": "6d605c92785120bf9407bb7369e3fd4d",
     "packages": [
         {
             "name": "defuse/php-encryption",
@@ -926,6 +926,50 @@
                 }
             ],
             "time": "2020-08-18T16:34:51+00:00"
+        },
+        {
+            "name": "laracademy/generators",
+            "version": "2.3",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/laracademy/generators.git",
+                "reference": "bd14fd3c9a55c13d0ecff81c488cefb36ad45477"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/laracademy/generators/zipball/bd14fd3c9a55c13d0ecff81c488cefb36ad45477",
+                "reference": "bd14fd3c9a55c13d0ecff81c488cefb36ad45477",
+                "shasum": ""
+            },
+            "type": "library",
+            "extra": {
+                "laravel": {
+                    "providers": [
+                        "Laracademy\\Generators\\GeneratorsServiceProvider"
+                    ]
+                }
+            },
+            "autoload": {
+                "psr-4": {
+                    "Laracademy\\Generators\\": "src/"
+                }
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "MIT"
+            ],
+            "authors": [
+                {
+                    "name": "Michael McMullen",
+                    "email": "michael@laracademy.co"
+                }
+            ],
+            "description": "This package will generate a Laravel Model based on your database table itself, filling in the required fields automatically.",
+            "keywords": [
+                "generators",
+                "laravel"
+            ],
+            "time": "2020-02-20T19:57:33+00:00"
         },
         {
             "name": "laravel/framework",
