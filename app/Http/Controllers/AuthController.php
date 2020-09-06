@@ -28,21 +28,14 @@ class AuthController extends Controller
 
     public function login(Request $request)
     {
-        $request->validate([
-            'email' => 'required|email|exists:users,email',
-            'password' => 'required'
-        ]);
-
         if( Auth::attempt(['email'=>$request->email, 'password'=>$request->password]) ) {
             $user = Auth::user();
 
             $token = $user->createToken($user->email.'-'.now());
 
-            return response()->json([
-                'token' => $token->accessToken
-            ]);
+            return response()->json(['token' => $token->accessToken],200)->header('Content-Type','text-plain') ;;
+        }else {
+            return response()->json(['ErrorMessage' => "Not Authorized"],300)->header('Content-Type','text-plain') ; ;
         }
     }
-
-
 }
