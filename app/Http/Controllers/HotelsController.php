@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Hotels;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use mysql_xdevapi\Exception;
 
 class HotelsController extends Controller
@@ -16,7 +17,11 @@ class HotelsController extends Controller
     public function index()
     {
         try{
-            return response(Hotels::all(),201)->header('Content-Type','text-plain') ;
+            $data = DB::table('cities')
+                ->join('hotels', 'cities.id', '=', 'hotels.CITYID')
+                ->select('hotels.*','cities.id as CITYID','cities.ENAME as City')
+                ->get();
+            return response($data,201)->header('Content-Type','text-plain') ;
         }catch (Exception $exception){
             throw $exception ;
         }
@@ -34,7 +39,31 @@ class HotelsController extends Controller
 
             $Variables = $request->all();
             $MyObject = new Hotels();
-            $MyObject->fill($Variables)->save() ;
+            $MyObject->fill($Variables['data']) ;
+            $ImagesSRC[] = array() ;
+            for ($i = 1 ; $i < 5 ;$i++){
+                $ServerPath = "" ;
+                if ($files = $request->file('IMGSRC' . $i)) {
+                    request()->validate(['IMGSRC' . $i  => 'required|mimes:jpg,png|max:2048',]);
+
+                    $files = $request->file('IMGSRC' . $i);
+
+                    $destinationPath = 'HotelsFile/'; // upload path
+                    $profilefile = date('YmdHis') . $files->getClientOriginalName();
+                    $ServerPath = $files->move($destinationPath, $profilefile);
+
+                }
+                $ImagesSRC[$i] = $ServerPath ;
+            }
+
+            $MyObject->IMGSRC1 = $ImagesSRC[1] ;
+            $MyObject->IMGSRC2 = $ImagesSRC[2] ;
+            $MyObject->IMGSRC3 = $ImagesSRC[3] ;
+            $MyObject->IMGSRC4 = $ImagesSRC[4] ;
+
+            $MyObject->save();
+
+            $MyObject = Hotels::findOrFail($MyObject->id);
 
             return response($MyObject,200)->header('Content-Type','text-plain') ;
 
@@ -52,10 +81,12 @@ class HotelsController extends Controller
     public function show($id)
     {
         try {
-
-            $MyObject = Hotels::findOrFail($id);
-
-            return response($MyObject, 200)->header('Content-Type', 'text-plain');
+            $data = DB::table('cities')
+                ->join('hotels', 'cities.id', '=', 'hotels.CITYID')
+                ->select('hotels.*','cities.id as CITYID','cities.ENAME as City')
+                ->where('hotels.id', $id)
+                ->get();
+            return response($data,201)->header('Content-Type','text-plain') ;
 
         }catch (Exception $exception){
             throw $exception;
@@ -72,14 +103,37 @@ class HotelsController extends Controller
     {
         try {
 
-            $MyObject = Hotels::findOrFail($id);
             $Variables = $request->all();
-            $MyObject->fill($Variables)->save() ;
+            $Variables2 = $request->getContent();
+            $MyObject = Hotels::findOrFail($id);
+            $MyObject->fill($Variables['data']) ;
+            $ImagesSRC[] = array() ;
+            for ($i = 1 ; $i < 5 ;$i++){
+                $ServerPath = "" ;
+                if ($files = $request->file('IMGSRC' . $i)) {
+                    request()->validate(['IMGSRC' . $i  => 'required|mimes:jpg,png|max:2048',]);
+
+                    $files = $request->file('IMGSRC' . $i);
+
+                    $destinationPath = 'CitiesFile/'; // upload path
+                    $profilefile = date('YmdHis') . $files->getClientOriginalName();
+                    $ServerPath = $files->move($destinationPath, $profilefile);
+
+                }
+                $ImagesSRC[$i] = $ServerPath ;
+            }
+
+            $MyObject->IMGSRC1 = $ImagesSRC[1] ;
+            $MyObject->IMGSRC2 = $ImagesSRC[2] ;
+            $MyObject->IMGSRC3 = $ImagesSRC[3] ;
+            $MyObject->IMGSRC4 = $ImagesSRC[4] ;
+
+            $MyObject->save();
 
             return response($MyObject,200)->header('Content-Type','text-plain') ;
 
         }catch (Exception $exception){
-            throw $exception;
+            throw $exception ;
         }
     }
 

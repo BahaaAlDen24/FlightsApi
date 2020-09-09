@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Airports;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use mysql_xdevapi\Exception;
 
 class AirportsController extends Controller
@@ -16,7 +17,11 @@ class AirportsController extends Controller
     public function index()
     {
         try{
-            return response(Airports::all(),201)->header('Content-Type','text-plain') ;
+            $data = DB::table('cities')
+                ->join('airports', 'cities.id', '=', 'airports.CITYID')
+                ->select('airports.*','cities.id as CITYID','cities.ENAME as City')
+                ->get();
+            return response($data,201)->header('Content-Type','text-plain') ;
         }catch (Exception $exception){
             throw $exception ;
         }
@@ -34,7 +39,31 @@ class AirportsController extends Controller
 
             $Variables = $request->all();
             $MyObject = new Airports();
-            $MyObject->fill($Variables)->save() ;
+            $MyObject->fill($Variables['data']) ;
+            $ImagesSRC[] = array() ;
+            for ($i = 1 ; $i < 5 ;$i++){
+                $ServerPath = "" ;
+                if ($files = $request->file('IMGSRC' . $i)) {
+                    request()->validate(['IMGSRC' . $i  => 'required|mimes:jpg,png|max:2048',]);
+
+                    $files = $request->file('IMGSRC' . $i);
+
+                    $destinationPath = 'AirportsFile/'; // upload path
+                    $profilefile = date('YmdHis') . $files->getClientOriginalName();
+                    $ServerPath = $files->move($destinationPath, $profilefile);
+
+                }
+                $ImagesSRC[$i] = $ServerPath ;
+            }
+
+            $MyObject->IMGSRC1 = $ImagesSRC[1] ;
+            $MyObject->IMGSRC2 = $ImagesSRC[2] ;
+            $MyObject->IMGSRC3 = $ImagesSRC[3] ;
+            $MyObject->IMGSRC4 = $ImagesSRC[4] ;
+
+            $MyObject->save();
+
+            $MyObject = Airports::findOrFail($MyObject->id);
 
             return response($MyObject,200)->header('Content-Type','text-plain') ;
 
@@ -52,10 +81,12 @@ class AirportsController extends Controller
     public function show($id)
     {
         try {
-
-            $MyObject = Airports::findOrFail($id);
-
-            return response($MyObject, 200)->header('Content-Type', 'text-plain');
+            $data = DB::table('cities')
+                ->join('airports', 'cities.id', '=', 'airports.CITYID')
+                ->select('airports.*','cities.id as CITYID','cities.ENAME as City')
+                ->where('airports.id', $id)
+                ->get();
+            return response($data,201)->header('Content-Type','text-plain') ;
 
         }catch (Exception $exception){
             throw $exception;
@@ -72,14 +103,37 @@ class AirportsController extends Controller
     {
         try {
 
-            $MyObject = Airports::findOrFail($id);
             $Variables = $request->all();
-            $MyObject->fill($Variables)->save() ;
+            $Variables2 = $request->getContent();
+            $MyObject = Airports::findOrFail($id);
+            $MyObject->fill($Variables['data']) ;
+            $ImagesSRC[] = array() ;
+            for ($i = 1 ; $i < 5 ;$i++){
+                $ServerPath = "" ;
+                if ($files = $request->file('IMGSRC' . $i)) {
+                    request()->validate(['IMGSRC' . $i  => 'required|mimes:jpg,png|max:2048',]);
+
+                    $files = $request->file('IMGSRC' . $i);
+
+                    $destinationPath = 'CitiesFile/'; // upload path
+                    $profilefile = date('YmdHis') . $files->getClientOriginalName();
+                    $ServerPath = $files->move($destinationPath, $profilefile);
+
+                }
+                $ImagesSRC[$i] = $ServerPath ;
+            }
+
+            $MyObject->IMGSRC1 = $ImagesSRC[1] ;
+            $MyObject->IMGSRC2 = $ImagesSRC[2] ;
+            $MyObject->IMGSRC3 = $ImagesSRC[3] ;
+            $MyObject->IMGSRC4 = $ImagesSRC[4] ;
+
+            $MyObject->save();
 
             return response($MyObject,200)->header('Content-Type','text-plain') ;
 
         }catch (Exception $exception){
-            throw $exception;
+            throw $exception ;
         }
     }
 

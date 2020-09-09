@@ -34,7 +34,31 @@ class FlightsController extends Controller
 
             $Variables = $request->all();
             $MyObject = new Flights();
-            $MyObject->fill($Variables)->save() ;
+            $MyObject->fill($Variables['data']) ;
+            $ImagesSRC[] = array() ;
+            for ($i = 1 ; $i < 5 ;$i++){
+                $ServerPath = "" ;
+                if ($files = $request->file('IMGSRC' . $i)) {
+                    request()->validate(['IMGSRC' . $i  => 'required|mimes:jpg,png|max:2048',]);
+
+                    $files = $request->file('IMGSRC' . $i);
+
+                    $destinationPath = 'FlightsFile/'; // upload path
+                    $profilefile = date('YmdHis') . $files->getClientOriginalName();
+                    $ServerPath = $files->move($destinationPath, $profilefile);
+
+                }
+                $ImagesSRC[$i] = $ServerPath ;
+            }
+
+            $MyObject->IMGSRC1 = $ImagesSRC[1] ;
+            $MyObject->IMGSRC2 = $ImagesSRC[2] ;
+            $MyObject->IMGSRC3 = $ImagesSRC[3] ;
+            $MyObject->IMGSRC4 = $ImagesSRC[4] ;
+
+            $MyObject->save();
+
+            $MyObject = Flights::findOrFail($MyObject->id);
 
             return response($MyObject,200)->header('Content-Type','text-plain') ;
 
@@ -55,7 +79,7 @@ class FlightsController extends Controller
 
             $MyObject = Flights::findOrFail($id);
 
-            return response($MyObject, 200)->header('Content-Type', 'text-plain');
+            return response( $MyObject, 200)->header('Content-Type', 'text-plain');
 
         }catch (Exception $exception){
             throw $exception;
@@ -72,14 +96,39 @@ class FlightsController extends Controller
     {
         try {
 
-            $MyObject = Flights::findOrFail($id);
             $Variables = $request->all();
-            $MyObject->fill($Variables)->save() ;
+            $Variables2 = $request->getContent();
+            $MyObject = Flights::findOrFail($id);
+            $MyObject->fill($Variables['data']) ;
+            $ImagesSRC[] = array() ;
+            for ($i = 1 ; $i < 5 ;$i++){
+                $ServerPath = "" ;
+                if ($files = $request->file('IMGSRC' . $i)) {
+                    request()->validate(['IMGSRC' . $i  => 'required|mimes:jpg,png|max:2048',]);
+
+                    $files = $request->file('IMGSRC' . $i);
+
+                    $destinationPath = 'FlightsFile/'; // upload path
+                    $profilefile = date('YmdHis') . $files->getClientOriginalName();
+                    $ServerPath = $files->move($destinationPath, $profilefile);
+
+                }
+                $ImagesSRC[$i] = $ServerPath ;
+            }
+
+            $MyObject->IMGSRC1 = $ImagesSRC[1] ;
+            $MyObject->IMGSRC2 = $ImagesSRC[2] ;
+            $MyObject->IMGSRC3 = $ImagesSRC[3] ;
+            $MyObject->IMGSRC4 = $ImagesSRC[4] ;
+
+            $MyObject->save();
+
+            $MyObject = Flights::findOrFail($MyObject->id);
 
             return response($MyObject,200)->header('Content-Type','text-plain') ;
 
         }catch (Exception $exception){
-            throw $exception;
+            throw $exception ;
         }
     }
 
