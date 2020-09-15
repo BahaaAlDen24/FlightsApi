@@ -3,7 +3,9 @@
 namespace App\Http\Controllers;
 
 use App\Models\Bookedflights;
+use Hamcrest\Core\IsNull;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use mysql_xdevapi\Exception;
 
 class BookedFlightsController extends Controller
@@ -16,7 +18,18 @@ class BookedFlightsController extends Controller
     public function index()
     {
         try{
-            return response(Bookedflights::all(),201)->header('Content-Type','text-plain') ;
+            $data = DB::table('bookedflights')
+                ->leftJoin('canceledflights', 'bookedflights.id', '=', 'canceledflights.BOOKEDFLIGHTID')
+                ->join('users', 'users.id', '=', 'bookedflights.USERID')
+                ->join('flights', 'flights.id', '=', 'bookedflights.FLIGHTID')
+                ->join('airports as AirportFrom', 'flights.FROMID', '=', 'AirportFrom.id')
+                ->join('airports as AirportTo', 'flights.TOID', '=', 'AirportTo.id')
+                ->join('cities as CityFrom', 'AirportFrom.CITYID', '=', 'CityFrom.id')
+                ->join('cities as CityTo', 'AirportTo.CITYID', '=', 'CityTo.id')
+                ->whereNull('canceledflights.id')
+                ->select('bookedflights.*','users.name as UserName',DB::raw('CONCAT(AirportFrom.ENAME,"-",CityFrom.ENAME," ==> ",AirportTo.ENAME,"-",CityTo.ENAME) as FlightInfo'))
+                ->get();
+            return response($data,201)->header('Content-Type','text-plain') ;
         }catch (Exception $exception){
             throw $exception ;
         }
@@ -30,41 +43,10 @@ class BookedFlightsController extends Controller
      */
     public function store(Request $request)
     {
-        try{
-
-            $Variables = $request->all();
-            $MyObject = new Bookedflights();
-            $MyObject->fill($Variables['data']) ;
-            $ImagesSRC[] = array() ;
-            for ($i = 1 ; $i < 5 ;$i++){
-                $ServerPath = "" ;
-                if ($files = $request->file('IMGSRC' . $i)) {
-                    request()->validate(['IMGSRC' . $i  => 'required|mimes:jpg,png|max:2048',]);
-
-                    $files = $request->file('IMGSRC' . $i);
-
-                    $destinationPath = 'BookedflightsFile/'; // upload path
-                    $profilefile = date('YmdHis') . $files->getClientOriginalName();
-                    $ServerPath = $files->move($destinationPath, $profilefile);
-
-                }
-                $ImagesSRC[$i] = $ServerPath ;
-            }
-
-            $MyObject->IMGSRC1 = $ImagesSRC[1] ;
-            $MyObject->IMGSRC2 = $ImagesSRC[2] ;
-            $MyObject->IMGSRC3 = $ImagesSRC[3] ;
-            $MyObject->IMGSRC4 = $ImagesSRC[4] ;
-
-            $MyObject->save();
-
-            $MyObject = Bookedflights::findOrFail($MyObject->id);
-
-            return response($MyObject,200)->header('Content-Type','text-plain') ;
-
-        }catch (Exception $exception){
-            throw $exception ;
-        }
+        $Variables = $request->all();
+        $MyObject = new BookedFlights();
+        $MyObject->fill($Variables)->save() ;
+        return response($MyObject,200)->header('Content-Type','text-plain') ;
     }
 
     /**
@@ -76,10 +58,18 @@ class BookedFlightsController extends Controller
     public function show($id)
     {
         try {
-
-            $MyObject = Bookedflights::findOrFail($id);
-
-            return response( $MyObject, 200)->header('Content-Type', 'text-plain');
+            $data = DB::table('bookedflights')
+                ->leftJoin('canceledflights', 'bookedflights.id', '=', 'canceledflights.BOOKEDFLIGHTID')
+                ->join('users', 'users.id', '=', 'bookedflights.USERID')
+                ->join('flights', 'flights.id', '=', 'bookedflights.FLIGHTID')
+                ->join('airports as AirportFrom', 'flights.FROMID', '=', 'AirportFrom.id')
+                ->join('airports as AirportTo', 'flights.TOID', '=', 'AirportTo.id')
+                ->join('cities as CityFrom', 'AirportFrom.CITYID', '=', 'CityFrom.id')
+                ->join('cities as CityTo', 'AirportTo.CITYID', '=', 'CityTo.id')
+                ->select('bookedflights.*','users.name as UserName',DB::raw('CONCAT(AirportFrom.ENAME,"-",CityFrom.ENAME," ==> ",AirportTo.ENAME,"-",CityTo.ENAME) as FlightInfo'))
+                ->where('bookedflights.id', $id)
+                ->get();
+            return response($data,201)->header('Content-Type','text-plain') ;
 
         }catch (Exception $exception){
             throw $exception;
@@ -90,65 +80,28 @@ class BookedFlightsController extends Controller
      * Update the specified resource in storage.
      *
      * @param  \Illuminate\Http\Request  $request
+     * @param  \App\Lessonattendence  $lessonattendence
      * @return \Illuminate\Http\Response
      */
-    public function update(Request $request,$id)
+    public function update(Request $request, $id)
     {
-        try {
+        $MyObject = BookedFlights::findOrFail($id);
+        $Variables = $request->all();
+        $MyObject->fill($Variables)->save() ;
 
-            $Variables = $request->all();
-            $Variables2 = $request->getContent();
-            $MyObject = Bookedflights::findOrFail($id);
-            $MyObject->fill($Variables['data']) ;
-            $ImagesSRC[] = array() ;
-            for ($i = 1 ; $i < 5 ;$i++){
-                $ServerPath = "" ;
-                if ($files = $request->file('IMGSRC' . $i)) {
-                    request()->validate(['IMGSRC' . $i  => 'required|mimes:jpg,png|max:2048',]);
-
-                    $files = $request->file('IMGSRC' . $i);
-
-                    $destinationPath = 'BookedflightsFile/'; // upload path
-                    $profilefile = date('YmdHis') . $files->getClientOriginalName();
-                    $ServerPath = $files->move($destinationPath, $profilefile);
-
-                }
-                $ImagesSRC[$i] = $ServerPath ;
-            }
-
-            $MyObject->IMGSRC1 = $ImagesSRC[1] ;
-            $MyObject->IMGSRC2 = $ImagesSRC[2] ;
-            $MyObject->IMGSRC3 = $ImagesSRC[3] ;
-            $MyObject->IMGSRC4 = $ImagesSRC[4] ;
-
-            $MyObject->save();
-
-            $MyObject = Bookedflights::findOrFail($MyObject->id);
-
-            return response($MyObject,200)->header('Content-Type','text-plain') ;
-
-        }catch (Exception $exception){
-            throw $exception ;
-        }
+        return response($MyObject,200)->header('Content-Type','text-plain') ;
     }
 
     /**
      * Remove the specified resource from storage.
      *
-     * @param  \App\Models\Flighttypes  $flighttypes
+     * @param  \App\Lessonattendence  $lessonattendence
      * @return \Illuminate\Http\Response
      */
     public function destroy($id)
     {
-        try {
-
-            $MyObject = Bookedflights::findOrFail($id);
-            $MyObject->delete() ;
-
-            return response($MyObject,200)->header('Content-Type','text-plain') ;
-
-        }catch (Exception $exception){
-            throw $exception;
-        }
+        $MyObject = BookedFlights::findOrFail($id);
+        $MyObject->delete() ;
+        return response($MyObject,200)->header('Content-Type','text-plain') ;
     }
 }

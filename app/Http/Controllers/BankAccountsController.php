@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Bankaccounts;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use mysql_xdevapi\Exception;
 
 class BankAccountsController extends Controller
@@ -16,7 +17,12 @@ class BankAccountsController extends Controller
     public function index()
     {
         try{
-            return response(BankAccounts::all(),201)->header('Content-Type','text-plain') ;
+            $data = DB::table('users')
+                ->join('bankaccounts', 'users.id', '=', 'bankaccounts.USERID')
+                ->join('banks', 'banks.id', '=', 'bankaccounts.BANKID')
+                ->select('bankaccounts.*','users.id as USERID','users.name as User','banks.id as BANKID','banks.ENAME as Bank')
+                ->get();
+            return response($data,201)->header('Content-Type','text-plain') ;
         }catch (Exception $exception){
             throw $exception ;
         }
@@ -30,41 +36,10 @@ class BankAccountsController extends Controller
      */
     public function store(Request $request)
     {
-        try{
-
-            $Variables = $request->all();
-            $MyObject = new BankAccounts();
-            $MyObject->fill($Variables['data']) ;
-            $ImagesSRC[] = array() ;
-            for ($i = 1 ; $i < 5 ;$i++){
-                $ServerPath = "" ;
-                if ($files = $request->file('IMGSRC' . $i)) {
-                    request()->validate(['IMGSRC' . $i  => 'required|mimes:jpg,png|max:2048',]);
-
-                    $files = $request->file('IMGSRC' . $i);
-
-                    $destinationPath = 'BankAccountsFile/'; // upload path
-                    $profilefile = date('YmdHis') . $files->getClientOriginalName();
-                    $ServerPath = $files->move($destinationPath, $profilefile);
-
-                }
-                $ImagesSRC[$i] = $ServerPath ;
-            }
-
-            $MyObject->IMGSRC1 = $ImagesSRC[1] ;
-            $MyObject->IMGSRC2 = $ImagesSRC[2] ;
-            $MyObject->IMGSRC3 = $ImagesSRC[3] ;
-            $MyObject->IMGSRC4 = $ImagesSRC[4] ;
-
-            $MyObject->save();
-
-            $MyObject = BankAccounts::findOrFail($MyObject->id);
-
-            return response($MyObject,200)->header('Content-Type','text-plain') ;
-
-        }catch (Exception $exception){
-            throw $exception ;
-        }
+        $Variables = $request->all();
+        $MyObject = new Bankaccounts();
+        $MyObject->fill($Variables)->save() ;
+        return response($MyObject,200)->header('Content-Type','text-plain') ;
     }
 
     /**
@@ -76,10 +51,13 @@ class BankAccountsController extends Controller
     public function show($id)
     {
         try {
-
-            $MyObject = BankAccounts::findOrFail($id);
-
-            return response( $MyObject, 200)->header('Content-Type', 'text-plain');
+            $data = DB::table('users')
+                ->join('bankaccounts', 'users.id', '=', 'bankaccounts.USERID')
+                ->join('banks', 'banks.id', '=', 'bankaccounts.BANKID')
+                ->select('bankaccounts.*','users.id as USERID','users.name as User','banks.id as BANKID','banks.ENAME as Bank')
+                ->where('bankaccounts.id', $id)
+                ->get();
+            return response($data,201)->header('Content-Type','text-plain') ;
 
         }catch (Exception $exception){
             throw $exception;
@@ -90,65 +68,28 @@ class BankAccountsController extends Controller
      * Update the specified resource in storage.
      *
      * @param  \Illuminate\Http\Request  $request
+     * @param  \App\Lessonattendence  $lessonattendence
      * @return \Illuminate\Http\Response
      */
-    public function update(Request $request,$id)
+    public function update(Request $request, $id)
     {
-        try {
+        $MyObject = Bankaccounts::findOrFail($id);
+        $Variables = $request->all();
+        $MyObject->fill($Variables)->save() ;
 
-            $Variables = $request->all();
-            $Variables2 = $request->getContent();
-            $MyObject = BankAccounts::findOrFail($id);
-            $MyObject->fill($Variables['data']) ;
-            $ImagesSRC[] = array() ;
-            for ($i = 1 ; $i < 5 ;$i++){
-                $ServerPath = "" ;
-                if ($files = $request->file('IMGSRC' . $i)) {
-                    request()->validate(['IMGSRC' . $i  => 'required|mimes:jpg,png|max:2048',]);
-
-                    $files = $request->file('IMGSRC' . $i);
-
-                    $destinationPath = 'BankAccountsFile/'; // upload path
-                    $profilefile = date('YmdHis') . $files->getClientOriginalName();
-                    $ServerPath = $files->move($destinationPath, $profilefile);
-
-                }
-                $ImagesSRC[$i] = $ServerPath ;
-            }
-
-            $MyObject->IMGSRC1 = $ImagesSRC[1] ;
-            $MyObject->IMGSRC2 = $ImagesSRC[2] ;
-            $MyObject->IMGSRC3 = $ImagesSRC[3] ;
-            $MyObject->IMGSRC4 = $ImagesSRC[4] ;
-
-            $MyObject->save();
-
-            $MyObject = BankAccounts::findOrFail($MyObject->id);
-
-            return response($MyObject,200)->header('Content-Type','text-plain') ;
-
-        }catch (Exception $exception){
-            throw $exception ;
-        }
+        return response($MyObject,200)->header('Content-Type','text-plain') ;
     }
 
     /**
      * Remove the specified resource from storage.
      *
-     * @param  \App\Models\Flighttypes  $flighttypes
+     * @param  \App\Lessonattendence  $lessonattendence
      * @return \Illuminate\Http\Response
      */
     public function destroy($id)
     {
-        try {
-
-            $MyObject = BankAccounts::findOrFail($id);
-            $MyObject->delete() ;
-
-            return response($MyObject,200)->header('Content-Type','text-plain') ;
-
-        }catch (Exception $exception){
-            throw $exception;
-        }
+        $MyObject = Bankaccounts::findOrFail($id);
+        $MyObject->delete() ;
+        return response($MyObject,200)->header('Content-Type','text-plain') ;
     }
 }

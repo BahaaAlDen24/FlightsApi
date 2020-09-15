@@ -2,8 +2,11 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Flightoffers;
 use App\Models\Flights;
+use DateTime;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use mysql_xdevapi\Exception;
 
 class FlightsController extends Controller
@@ -16,7 +19,23 @@ class FlightsController extends Controller
     public function index()
     {
         try{
-            return response(Flights::all(),201)->header('Content-Type','text-plain') ;
+            $data = DB::table('flights')
+                ->join('airports as AirportFrom', 'flights.FROMID', '=', 'AirportFrom.id')
+                ->join('airports as AirportTo', 'flights.TOID', '=', 'AirportTo.id')
+                ->join('airlines', 'flights.AIRLINEID', '=', 'airlines.id')
+                ->join('airplanes', 'flights.AIRPLANEID', '=', 'airplanes.id')
+                ->join('flighttypes', 'flights.FLIGHTTYPEID', '=', 'flighttypes.id')
+                ->leftjoin('flightoffers', 'flightoffers.FLIGHTID', '=', 'flights.id')
+                ->leftjoin('offers', 'flightoffers.OFFERID', '=', 'offers.id')
+                ->select('flights.*',
+                                  'AirportFrom.id as FROMID','AirportFrom.ENAME as FromName',
+                                  'AirportTo.id as TOID','AirportTo.ENAME as ToName',
+                                  'airlines.id as AIRPLANEID','airlines.ENAME as AirlineName',
+                                  'airplanes.id as AIRPLANEID','airplanes.ENAME as AirplaneName',
+                                  'flightoffers.OFFERID as OFFERID','offers.ENAME as OfferName','offers.DISCOUNTRATE as OfferDISCOUNTRATE',
+                                  'flighttypes.id as FLIGHTTYPEID','flighttypes.ENAME as FlightTypeName')
+                ->get();
+            return response($data,201)->header('Content-Type','text-plain') ;
         }catch (Exception $exception){
             throw $exception ;
         }
@@ -34,6 +53,8 @@ class FlightsController extends Controller
 
             $Variables = $request->all();
             $MyObject = new Flights();
+            $Variables['data']['ARRIVALTIME'] = date("Y-d-m H:i:s", strtotime(str_replace('- ', '', $Variables['data']['ARRIVALTIME']))) ;
+            $Variables['data']['DEPATURETIME'] = date("Y-d-m H:i:s", strtotime(str_replace('- ', '', $Variables['data']['DEPATURETIME']))) ;
             $MyObject->fill($Variables['data']) ;
             $ImagesSRC[] = array() ;
             for ($i = 1 ; $i < 5 ;$i++){
@@ -60,6 +81,15 @@ class FlightsController extends Controller
 
             $MyObject = Flights::findOrFail($MyObject->id);
 
+            if ($Variables['data']['OFFERID'] != null){
+                $FlightOffer = new Flightoffers() ;
+                $Variables2 = array() ;
+                $Variables2['OFFERID']  = $Variables['data']['OFFERID'] ;
+                $Variables2['FLIGHTID'] = $MyObject->id  ;
+                $FlightOffer->fill($Variables2);
+                $FlightOffer->save();
+            }
+
             return response($MyObject,200)->header('Content-Type','text-plain') ;
 
         }catch (Exception $exception){
@@ -76,10 +106,24 @@ class FlightsController extends Controller
     public function show($id)
     {
         try {
-
-            $MyObject = Flights::findOrFail($id);
-
-            return response( $MyObject, 200)->header('Content-Type', 'text-plain');
+            $data = DB::table('flights')
+                ->join('airports as AirportFrom', 'flights.FROMID', '=', 'AirportFrom.id')
+                ->join('airports as AirportTo', 'flights.TOID', '=', 'AirportTo.id')
+                ->join('airlines', 'flights.AIRLINEID', '=', 'airlines.id')
+                ->join('airplanes', 'flights.AIRPLANEID', '=', 'airplanes.id')
+                ->join('flighttypes', 'flights.FLIGHTTYPEID', '=', 'flighttypes.id')
+                ->leftjoin('flightoffers', 'flightoffers.FLIGHTID', '=', 'flights.id')
+                ->leftjoin('offers', 'flightoffers.OFFERID', '=', 'offers.id')
+                ->select('flights.*',
+                                'AirportFrom.id as FROMID','AirportFrom.ENAME as FromName',
+                                'AirportTo.id as TOID','AirportTo.ENAME as ToName',
+                                'airlines.id as AIRPLANEID','airlines.ENAME as AirlineName',
+                                'airplanes.id as AIRPLANEID','airplanes.ENAME as AirplaneName',
+                                'flighttypes.id as FLIGHTTYPEID','flighttypes.ENAME as FlightTypeName',
+                                'flightoffers.OFFERID as OFFERID','offers.ENAME as OfferName','offers.DISCOUNTRATE as OfferDISCOUNTRATE')
+                ->where('flights.id', $id)
+                ->get();
+            return response($data,201)->header('Content-Type','text-plain') ;
 
         }catch (Exception $exception){
             throw $exception;
@@ -124,6 +168,16 @@ class FlightsController extends Controller
             $MyObject->save();
 
             $MyObject = Flights::findOrFail($MyObject->id);
+
+            if ($Variables['data']['OFFERID'] != null){
+                $FlightOffer = new Flightoffers() ;
+                $Variables2 = array() ;
+                DB::delete('DELETE FROM flightoffers WHERE FLIGHTID = ?', [$MyObject->id]);
+                $Variables2['OFFERID']  = $Variables['data']['OFFERID'] ;
+                $Variables2['FLIGHTID'] = $MyObject->id  ;
+                $FlightOffer->fill($Variables2);
+                $FlightOffer->save();
+            }
 
             return response($MyObject,200)->header('Content-Type','text-plain') ;
 

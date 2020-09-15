@@ -22,7 +22,11 @@ Route::post('register', 'AuthController@register');
 Route::post('login', 'AuthController@login');
 
 Route::middleware('auth:api')->group(function() {
-
+    Route::get('UserInfo', 'GuestController@UserInfo');
+    Route::get('BookFlight/{FlightID}/{UserAccountID}', 'GuestController@BookFlight');
+    Route::get('UserBookFlight', 'GuestController@UserBookFlight');
+    Route::get('BookedFlightsIndex', 'CustomersController@BookedFlightsIndex');
+    Route::get('CanceledFlightsIndex', 'CustomersController@CanceledFlightsIndex');
 });
 
 Route::post('FileDownload', 'FilesController@FileDownload');
@@ -59,3 +63,7 @@ Route::resource('UserProfile', 'UserProfileController');
 Route::post('UserProfile/{id}', 'UserProfileController@update');
 Route::resource('User', 'UsersController');
 Route::post('User/{id}', 'UsersController@update');
+
+
+Route::post('Search', 'GuestController@Search');
+
